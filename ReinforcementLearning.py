@@ -50,9 +50,9 @@ q_table = np.zeros((cols, cols, 8))
 rewards = np.full((cols, cols), -100)
 
 epsilon = 0.9
-discount_factor = 0.95
+discount_factor = 0.8
 learning_rate = 0.9
-episode = 100000
+episode = 700000
 
 # draw grids
 
@@ -153,41 +153,6 @@ def get_next(grid, action):
         return (row, col)
     return next_grid
 
-# def get_next(grid, action):
-#     row, col = grid
-#     dx = 0
-#     dy = 0
-
-#     if action == 0:  # N
-#         if col > 0:
-#             dy = -1
-#     elif action == 1:  # E
-#         if row < (cols-1):
-#             dx = 1
-#     elif action == 2:  # S
-#         if col < (cols-1):
-#             dy = 1
-#     elif action == 3:  # W
-#         if row > 0:
-#             dx = -1
-#     elif action == 4:  # NE
-#         if (col > 0) and (row < (cols-1)):
-#             dy = -1
-#             dx = 1
-#     elif action == 5:  # SE
-#         if (col < (cols-1)) and (row < (cols-1)):
-#             dy = 1
-#             dx = 1
-#     elif action == 6:  # SW
-#         if (col < (cols-1)) and (row > 0):
-#             dy = 1
-#             dx = -1
-#     elif action == 7:  # NW
-#         if (col > 0) and (row > 0):
-#             dy = -1
-#             dx = -1
-#     return (row + dx, col + dy)
-
 
 def train():
     for _ in range(episode):
@@ -199,14 +164,14 @@ def train():
             grid = get_next(grid, action)
 
             reward = rewards[grid[1], grid[0]]
-            old_q_value = q_table[
+            old_q = q_table[
                 old_grid[1], old_grid[0], action]
             temporal_difference = reward + (discount_factor *
-                                            np.max(q_table[grid[1], grid[0]])) - old_q_value
+                                            np.max(q_table[grid[1], grid[0]])) - old_q
 
-            new_q_value = old_q_value + (learning_rate * temporal_difference)
+            new_q = old_q + (learning_rate * temporal_difference)
             q_table[old_grid[1], old_grid[0],
-                    action] = new_q_value
+                    action] = new_q
 
     print('Training completed!')
 
@@ -252,7 +217,7 @@ def print_all_shortest_paths_util(current, end, visited, path, total_num_of_alte
             grids.append(get_next(current, action))
 
         for i in grids:
-            if visited[i[1], i[0]] == False:
+            if visited[i[1], i[0]] == False and total_num_of_alternative[0] <= 1000:
                 print_all_shortest_paths_util(
                     i, end, visited, path, total_num_of_alternative)
 
@@ -269,7 +234,10 @@ def print_all_shortest_paths(start, end):
 
     print_all_shortest_paths_util(
         start, end, visited, path, total_num_of_alternative)
-    print("total number of alternative paths ", total_num_of_alternative[0])
+    if total_num_of_alternative[0] <= 1000:
+        print("total number of alternative paths ", total_num_of_alternative[0])
+    else:
+        print("total number of alternative paths greater than 1000")
 
 
 start = None
