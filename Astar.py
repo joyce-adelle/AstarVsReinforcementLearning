@@ -4,90 +4,13 @@ from os import path as ospath
 from Node import Node
 import heapq
 import time
+from utilities import *
 
 pygame.init()
-clock = pygame.time.Clock()
-
-FPS = 60
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-GREY = (128, 128, 128)
-FONT = pygame.font.SysFont('Futura', 24)
-
-# game window
-grid_size = 20
-cols = 30
-margin = 90
-screen_width = grid_size * cols
-screen_height = (grid_size * cols) + margin
-screen_text = ""
-
-screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('A Star')
 
-# image upload
-wall = pygame.image.load("img/wall.png")
-walk = pygame.image.load("img/footprints.png")
-wrong = pygame.image.load("img/fos.png")
-startimg = pygame.image.load("img/walk.png")
-finish = pygame.image.load("img/finish.png")
-bluebg = pygame.image.load("img/bluebg.jpg")
-
-bluebg = pygame.transform.scale(bluebg, (screen_width, screen_height - margin))
-
-wall.convert()
-walk.convert()
-wrong.convert()
-startimg.convert()
-finish.convert()
-bluebg.convert()
-
-environment = []  
-
-# draw grids
-
-
-def draw_grid():
-    for grid in range(cols + 1):
-        # vertical lines
-        pygame.draw.line(screen, GREY, (grid * grid_size, 0),
-                         (grid * grid_size, screen_height - margin))
-        # horizontal lines
-        pygame.draw.line(screen, GREY, (0, grid * grid_size),
-                         (screen_width, grid * grid_size))
-
-
-def draw():
-    for row in range(cols):
-        for col in range(cols):
-            if environment[row][col] == 1:
-                # walls
-                img = pygame.transform.scale(wall, (grid_size, grid_size))
-                screen.blit(img, (col * grid_size, row * grid_size))
-            elif environment[row][col] == 2:
-                # barriers
-                screen.fill(BLACK, pygame.Rect(col * grid_size,
-                                               row * grid_size, grid_size, grid_size))
-            elif environment[row][col] == 3:
-                # path
-                img = pygame.transform.scale(walk, (grid_size, grid_size))
-                screen.blit(img, (col * grid_size, row * grid_size))
-
-            elif environment[row][col] == 4:
-                # start
-                img = pygame.transform.scale(startimg, (grid_size, grid_size))
-                screen.blit(img, (col * grid_size, row * grid_size))
-
-            elif environment[row][col] == 5:
-                # finish
-                img = pygame.transform.scale(finish, (grid_size, grid_size))
-                screen.blit(img, (col * grid_size, row * grid_size))
-
-            elif environment[row][col] == 6:
-                # wrong path
-                img = pygame.transform.scale(wrong, (grid_size, grid_size))
-                screen.blit(img, (col * grid_size, row * grid_size))
-
+FONT = pygame.font.SysFont('Futura', 24)
+screen_text = ""
 
 def draw_text():
     img = FONT.render(screen_text, True, BLACK)
@@ -181,6 +104,7 @@ if ospath.exists(f'environment{environment_number}_data'):
     pickle_in = open(f'environment{environment_number}_data', 'rb')
     environment = pickle.load(pickle_in)
 else:
+    environment = []
     for row in range(cols):
         r = [0] * cols
         environment.append(r)
@@ -203,7 +127,7 @@ while run:
 
     # show the grid and draw the level tiles
     draw_grid()
-    draw()
+    draw(environment)
 
     # text showing current environment
     draw_text()
@@ -221,6 +145,7 @@ while run:
             x = pos[0] // grid_size
             y = pos[1] // grid_size
             grid = (x, y)
+            print("grid  ", grid)
 
             # check that the coordinates are within the tile area
             if (x < cols and y < cols):

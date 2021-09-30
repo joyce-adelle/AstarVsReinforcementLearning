@@ -6,23 +6,23 @@ import time
 from utilities import *
 
 pygame.init()
-pygame.display.set_caption('Reinforcement Learning')
+pygame.display.set_caption('Double Q Reinforcement Learning')
 
 FONT = pygame.font.SysFont('Futura', 24)
 screen_text = ""
 
-# a 3D numpy array to hold the current Q-values for each state and action pair: Q(s, a) and initialized to 0.
-q_table = np.zeros((cols, cols, 8))
+# two 3D numpy array to hold the current Q-values for each state and action pair: Q(s, a) and initialized to 0.
+q_a_table = np.zeros((cols, cols, 8))
+q_b_table = np.zeros((cols, cols, 8))
 
 # 2D numpy array to hold rewards, intialized to -100
 rewards = np.full((cols, cols), -100)
-
+#number of iterations
 episode = 400000
 
 def draw_text():
     img = FONT.render(screen_text, True, BLACK)
     screen.blit(img, (grid_size, screen_height - 60))
-
 
 '''
     determines if specified grid is a terminal state
@@ -49,11 +49,15 @@ def get_random_start_grid():
 '''
 def get_next_action(grid):
     if np.random.random() < epsilon:
-        actions = np.where(q_table[grid[1], grid[0]] ==
-                           np.max(q_table[grid[1], grid[0]]))[0]
-        return np.random.choice(actions)
+        maxa = np.where(q_a_table[grid[1], grid[0]] ==
+                           np.max(q_a_table[grid[1], grid[0]]))[0]
+        maxb = np.where(q_b_table[grid[1], grid[0]] ==
+                           np.max(q_b_table[grid[1], grid[0]]))[0]
+
+        max_qs = np.where(maxa==maxb)[0]
+        return np.random.choice(max_qs)
     else:
-        return np.random.randint(8)
+        return np.random.randint(8) 
 
 '''
     gets next grid based on action
@@ -90,14 +94,25 @@ def learn():
             grid = get_next(grid, action)
 
             reward = rewards[grid[1], grid[0]]
-            old_q = q_table[
-                old_grid[1], old_grid[0], action]
-            temporal_difference = reward + (discount_factor *
-                                            np.max(q_table[grid[1], grid[0]])) - old_q
 
-            new_q = old_q + (learning_rate * temporal_difference)
-            q_table[old_grid[1], old_grid[0],
-                    action] = new_q
+            if np.random.rand() < 0.5:
+                old_q = q_a_table[
+                    old_grid[1], old_grid[0], action]
+                temporal_difference = reward + (discount_factor *
+                                                np.max(q_a_table[grid[1], grid[0]])) - old_q
+
+                new_q = old_q + (learning_rate * temporal_difference)
+                q_a_table[old_grid[1], old_grid[0],
+                        action] = new_q
+            else:
+                old_q = q_b_table[
+                    old_grid[1], old_grid[0], action]
+                temporal_difference = reward + (discount_factor *
+                                                np.max(q_b_table[grid[1], grid[0]])) - old_q
+
+                new_q = old_q + (learning_rate * temporal_difference)
+                q_b_table[old_grid[1], old_grid[0],
+                        action] = new_q
 
     print('Training completed!')
 
@@ -113,7 +128,7 @@ def get_shortest_path(start_grid):
         path = []
         path.append(current_grid)
         while not is_terminal_state(current_grid):
-            action = np.argmax(q_table[current_grid[1], current_grid[0]])
+            action = np.argmax(q_a_table[current_grid[1], current_grid[0]])
             current_grid = get_next(current_grid, action)
             if(current_grid not in path):
                 path.append(current_grid)
@@ -136,8 +151,8 @@ def print_all_shortest_paths_util(current, end, visited, path, total_num_of_alte
         print(path, len(path))
         total_num_of_alternative[0] += 1
     else:
-        actions = np.where(q_table[current[1], current[0]] ==
-                           np.max(q_table[current[1], current[0]]))[0]
+        actions = np.where(q_a_table[current[1], current[0]] ==
+                           np.max(q_a_table[current[1], current[0]]))[0]
         grids = []
         for action in actions:
             grids.append(get_next(current, action))
@@ -254,7 +269,7 @@ while run:
                 start_time = time.time()
                 learn()
                 end_time = time.time()
-                print(f"Total learning time is {end_time - start_time}")
+                print(f"Total training time is {end_time - start_time}")
                 is_trained = True
             start_time = time.time()
             path = get_shortest_path(start)
@@ -321,7 +336,7 @@ while run:
             if end:
                 rewards[end[1], end[0]] = -1
 
-            q_table = np.zeros((cols, cols, 8))
+            q_a_table = np.zeros((cols, cols, 8))
             start = None
             end = None
             set_end = True

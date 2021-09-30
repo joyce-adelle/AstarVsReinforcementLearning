@@ -14,8 +14,8 @@ FONT = pygame.font.SysFont('Futura', 24)
 
 
 # game window
-grid_size = 20
-cols = 30
+grid_size = 30
+cols = 20
 margin = 90
 screen_width = grid_size * cols
 screen_height = (grid_size * cols) + margin

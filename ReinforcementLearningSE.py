@@ -13,40 +13,27 @@ screen_text = ""
 
 # a 3D numpy array to hold the current Q-values for each state and action pair: Q(s, a) and initialized to 0.
 q_table = np.zeros((cols, cols, 8))
-
 # 2D numpy array to hold rewards, intialized to -100
 rewards = np.full((cols, cols), -100)
+# number of iterations for learning
+episode = 20000
 
-episode = 400000
 
 def draw_text():
     img = FONT.render(screen_text, True, BLACK)
     screen.blit(img, (grid_size, screen_height - 60))
 
 
-'''
-    determines if specified grid is a terminal state
-'''
+# determines if specified grid is a terminal state
 def is_terminal_state(grid):
     if rewards[grid[1], grid[0]] == -1.:
         return False
     else:
         return True
 
-'''
-    gets a random, non-terminal starting grid
-'''
-def get_random_start_grid():
-    row = np.random.randint(cols)
-    col = np.random.randint(cols)
-    while is_terminal_state((row, col)):
-        row = np.random.randint(cols)
-        col = np.random.randint(cols)
-    return row, col
+# determines action using epsilon greedy algorithm
 
-'''
-    determines action using epsilon greedy algorithm
-'''
+
 def get_next_action(grid):
     if np.random.random() < epsilon:
         actions = np.where(q_table[grid[1], grid[0]] ==
@@ -55,9 +42,9 @@ def get_next_action(grid):
     else:
         return np.random.randint(8)
 
-'''
-    gets next grid based on action
-'''
+# gets next grid based on action
+
+
 def get_next(grid, action):
     row, col = grid
     switch = {
@@ -77,12 +64,10 @@ def get_next(grid, action):
         return (row, col)
     return next_grid
 
-'''
-    learns environment
-'''
-def learn():
+
+def learn(start):
     for _ in range(episode):
-        grid = get_random_start_grid()
+        grid = start
 
         while not is_terminal_state(grid):
             action = get_next_action(grid)
@@ -101,12 +86,12 @@ def learn():
 
     print('Training completed!')
 
-'''
-    get an optimal path
-'''
+# get a shortest path
+
+
 def get_shortest_path(start_grid):
     if is_terminal_state(start_grid):
-        return None
+        return []
 
     else:
         current_grid = start_grid
@@ -114,7 +99,7 @@ def get_shortest_path(start_grid):
         path.append(current_grid)
         while not is_terminal_state(current_grid):
             action = np.argmax(q_table[current_grid[1], current_grid[0]])
-            current_grid = get_next(current_grid, action)
+            current_grid = get_next(current_grid, np.min(action))
             if(current_grid not in path):
                 path.append(current_grid)
             else:
@@ -122,9 +107,9 @@ def get_shortest_path(start_grid):
 
         return path
 
-'''
-    utility function to print all optimal paths recursively
-'''
+# utility function to print all optimal paths recursively
+
+
 def print_all_shortest_paths_util(current, end, visited, path, total_num_of_alternative):
     visited[current[1], current[0]] = True
     path.append(current)
@@ -150,9 +135,9 @@ def print_all_shortest_paths_util(current, end, visited, path, total_num_of_alte
     path.pop()
     visited[current[1], current[0]] = False
 
-'''
-    prints all optimal paths from source to destination
-'''
+# prints all optimal paths from source to destination
+
+
 def print_all_shortest_paths(start, end):
     visited = np.full((cols, cols), False)
     path = []
@@ -161,7 +146,8 @@ def print_all_shortest_paths(start, end):
     print_all_shortest_paths_util(
         start, end, visited, path, total_num_of_alternative)
     if total_num_of_alternative[0] <= 50000:
-        print("total number of alternative paths ", total_num_of_alternative[0])
+        print("total number of alternative paths ",
+              total_num_of_alternative[0])
     else:
         print("total number of alternative paths greater than 50000")
 
@@ -169,8 +155,6 @@ def print_all_shortest_paths(start, end):
 start = None
 end = None
 clicked = False
-set_end = True
-is_trained = False
 environment_number = input("Enter environment number :")
 screen_text = f'Enivironment: {environment_number}'
 # use environment number to update environment
@@ -232,7 +216,7 @@ while run:
                     if not start:
                         environment[y][x] = 4
                         start = grid
-                    elif not end and grid != start and set_end:
+                    elif not end and grid != start:
                         environment[y][x] = 5
                         end = grid
                         # set the reward for the goal to 100
@@ -241,7 +225,7 @@ while run:
                     if grid == start:
                         environment[y][x] = 0
                         start = None
-                    elif grid == end and set_end:
+                    elif grid == end:
                         environment[y][x] = 0
                         rewards[y, x] = -1.
                         end = None
@@ -250,12 +234,10 @@ while run:
             clicked = False
 
         if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE and start and end:
-            if(not is_trained):
-                start_time = time.time()
-                learn()
-                end_time = time.time()
-                print(f"Total learning time is {end_time - start_time}")
-                is_trained = True
+            start_time = time.time()
+            learn(start)
+            end_time = time.time()
+            print(f"Total learning time is {end_time - start_time}")
             start_time = time.time()
             path = get_shortest_path(start)
             end_time = time.time()
@@ -279,29 +261,6 @@ while run:
                 print("path ", path, len(path))
                 print_all_shortest_paths(start, end)
 
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_TAB and is_trained:
-            if ospath.exists(f'environment{environment_number}_data'):
-                pickle_in = open(f'environment{environment_number}_data', 'rb')
-                environment = pickle.load(pickle_in)
-            else:
-                environment = []
-                for row in range(cols):
-                    r = [0] * cols
-                    environment.append(r)
-
-                # create boundary
-                for tile in range(0, cols):
-                    environment[cols - 1][tile] = 1
-                    environment[0][tile] = 1
-                    environment[tile][0] = 1
-                    environment[tile][cols - 1] = 1
-
-            environment[end[1]][end[0]] = 5
-
-            start = None
-            set_end = False
-            clicked = False
-
         if event.type == pygame.KEYDOWN and event.key == pygame.K_BACKSPACE:
             if ospath.exists(f'environment{environment_number}_data'):
                 pickle_in = open(f'environment{environment_number}_data', 'rb')
@@ -324,7 +283,6 @@ while run:
             q_table = np.zeros((cols, cols, 8))
             start = None
             end = None
-            set_end = True
             is_trained = False
             clicked = False
 
