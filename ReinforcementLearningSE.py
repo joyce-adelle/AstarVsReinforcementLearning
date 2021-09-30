@@ -23,17 +23,18 @@ def draw_text():
     img = FONT.render(screen_text, True, BLACK)
     screen.blit(img, (grid_size, screen_height - 60))
 
-
-# determines if specified grid is a terminal state
+'''
+    determines if specified grid is a terminal state
+'''
 def is_terminal_state(grid):
     if rewards[grid[1], grid[0]] == -1.:
         return False
     else:
         return True
 
-# determines action using epsilon greedy algorithm
-
-
+'''
+    determines action using epsilon greedy algorithm
+'''
 def get_next_action(grid):
     if np.random.random() < epsilon:
         actions = np.where(q_table[grid[1], grid[0]] ==
@@ -42,9 +43,9 @@ def get_next_action(grid):
     else:
         return np.random.randint(8)
 
-# gets next grid based on action
-
-
+'''
+    gets next grid based on action
+'''
 def get_next(grid, action):
     row, col = grid
     switch = {
@@ -64,7 +65,9 @@ def get_next(grid, action):
         return (row, col)
     return next_grid
 
-
+'''
+    learns environment
+'''
 def learn(start):
     for _ in range(episode):
         grid = start
@@ -86,9 +89,9 @@ def learn(start):
 
     print('Training completed!')
 
-# get a shortest path
-
-
+'''
+    get an optimal path
+'''
 def get_shortest_path(start_grid):
     if is_terminal_state(start_grid):
         return []
@@ -107,9 +110,9 @@ def get_shortest_path(start_grid):
 
         return path
 
-# utility function to print all optimal paths recursively
-
-
+'''
+    utility function to print all optimal paths recursively
+'''
 def print_all_shortest_paths_util(current, end, visited, path, total_num_of_alternative):
     visited[current[1], current[0]] = True
     path.append(current)
@@ -135,9 +138,9 @@ def print_all_shortest_paths_util(current, end, visited, path, total_num_of_alte
     path.pop()
     visited[current[1], current[0]] = False
 
-# prints all optimal paths from source to destination
-
-
+'''
+    prints all optimal paths from source to destination
+'''
 def print_all_shortest_paths(start, end):
     visited = np.full((cols, cols), False)
     path = []
