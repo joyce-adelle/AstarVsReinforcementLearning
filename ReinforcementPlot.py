@@ -5,8 +5,16 @@ import numpy as np
 import time
 from utilities import *
 
+import itertools
+import matplotlib
+import matplotlib.style
+from matplotlib import pyplot as plt
+import pandas as pd
+
 pygame.init()
 pygame.display.set_caption('Reinforcement Learning')
+
+matplotlib.style.use('ggplot')
 
 FONT = pygame.font.SysFont('Futura', 24)
 screen_text = ""
@@ -17,6 +25,8 @@ q_table = np.zeros((cols, cols, 8))
 rewards = np.full((cols, cols), -100)
 # number of iterations for learning
 episode = 20000
+episode_rewards = np.zeros(episode)
+episode_lengths = np.zeros(episode)
 
 
 def draw_text():
@@ -69,10 +79,10 @@ def get_next(grid, action):
     learns environment
 '''
 def learn(start):
-    for _ in range(episode):
+    for ep in range(episode):
         grid = start
 
-        while not is_terminal_state(grid):
+        for time_step in itertools.count():
             action = get_next_action(grid)
             old_grid = grid
             grid = get_next(grid, action)
@@ -86,6 +96,13 @@ def learn(start):
             new_q = old_q + (learning_rate * temporal_difference)
             q_table[old_grid[1], old_grid[0],
                     action] = new_q
+
+            # Update statistics
+            episode_rewards[ep] += reward
+            episode_lengths[ep] = time_step
+
+            if is_terminal_state(grid):
+                break
 
     print('Training completed!')
 
@@ -153,6 +170,43 @@ def print_all_shortest_paths(start, end):
               total_num_of_alternative[0])
     else:
         print("total number of alternative paths greater than 50000")
+
+def plot_episode_stats(environment_number, smoothing_window=60, noshow=False):
+    # Plot the episode length over time
+    fig1 = plt.figure(figsize=(10,5))
+    plt.plot(episode_lengths)
+    plt.xlabel("episode")
+    plt.ylabel("length")
+    plt.title("Episode Length Over Time In Environment " + environment_number)
+    if noshow:
+        plt.close(fig1)
+    else:
+        plt.show()
+
+    # Plot the episode reward over time
+    fig2 = plt.figure(figsize=(10,5))
+    rewards_smoothed = pd.Series(episode_rewards).rolling(smoothing_window, min_periods=smoothing_window).mean()
+    plt.plot(rewards_smoothed)
+    plt.xlabel("episode")
+    plt.ylabel("reward")
+    plt.title("Reinforcement Learning Returns In Environment " + environment_number)
+    if noshow:
+        plt.close(fig2)
+    else:
+        plt.show()
+
+    # Plot time steps and episode number
+    fig3 = plt.figure(figsize=(10,5))
+    plt.plot(np.cumsum(episode_lengths), np.arange(len(episode_lengths)))
+    plt.xlabel("time steps")
+    plt.ylabel("episode")
+    plt.title("Episode Per Time Step In Environment ")
+    if noshow:
+        plt.close(fig3)
+    else:
+        plt.show()
+
+    return fig1, fig2, fig3
 
 
 start = None
@@ -264,6 +318,7 @@ while run:
 
                 print("path ", path, len(path))
                 print_all_shortest_paths(start, end)
+                plot_episode_stats(environment_number)
 
         if event.type == pygame.KEYDOWN and event.key == pygame.K_BACKSPACE:
             if ospath.exists(f'environment{environment_number}_data'):
