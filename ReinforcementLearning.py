@@ -17,7 +17,7 @@ q_table = np.zeros((cols, cols, 8))
 # 2D numpy array to hold rewards, intialized to -100
 rewards = np.full((cols, cols), -100)
 
-episode = 400000
+episode = 500000
 
 def draw_text():
     img = FONT.render(screen_text, True, BLACK)
