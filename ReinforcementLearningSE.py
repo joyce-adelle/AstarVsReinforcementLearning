@@ -113,7 +113,7 @@ def get_shortest_path(start_grid):
 '''
     utility function to print all optimal paths recursively
 '''
-def print_all_shortest_paths_util(current, end, visited, path, total_num_of_alternative):
+def print_all_shortest_paths_util(current, end, visited, path, total_num_of_alternative, result):
     visited[current[1], current[0]] = True
     path.append(current)
 
@@ -121,6 +121,7 @@ def print_all_shortest_paths_util(current, end, visited, path, total_num_of_alte
         total_num_of_alternative[0] += 1
 
     elif current[0] == end[0] and current[1] == end[1]:
+        result.append(path + [])
         print(path, len(path))
         total_num_of_alternative[0] += 1
     else:
@@ -133,7 +134,7 @@ def print_all_shortest_paths_util(current, end, visited, path, total_num_of_alte
         for i in grids:
             if visited[i[1], i[0]] == False and total_num_of_alternative[0] <= 50000:
                 print_all_shortest_paths_util(
-                    i, end, visited, path, total_num_of_alternative)
+                    i, end, visited, path, total_num_of_alternative, result)
 
     path.pop()
     visited[current[1], current[0]] = False
@@ -144,16 +145,18 @@ def print_all_shortest_paths_util(current, end, visited, path, total_num_of_alte
 def print_all_shortest_paths(start, end):
     visited = np.full((cols, cols), False)
     path = []
+    result = []
     total_num_of_alternative = [0]
 
     print_all_shortest_paths_util(
-        start, end, visited, path, total_num_of_alternative)
+        start, end, visited, path, total_num_of_alternative, result)
     if total_num_of_alternative[0] <= 50000:
         print("total number of alternative paths ",
               total_num_of_alternative[0])
     else:
         print("total number of alternative paths greater than 50000")
 
+    return result
 
 start = None
 end = None
