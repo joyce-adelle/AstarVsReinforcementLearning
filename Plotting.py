@@ -182,7 +182,7 @@ def plot_average_astar_vs_reinforcement():
     
     plt.xlabel("Environments")
     plt.ylabel("Average Execution Time")
-    plt.title('Average Execution Time of Astar and Reinforcement Learning in Environments')
+    plt.title('Average Execution Time of Astar and Proposed Solution in Environments')
 
     plt.legend()    
     plt.show()
@@ -209,10 +209,10 @@ def plot_average_astar_vs_treinforcement():
     
     plt.xlabel("Environments")
     plt.ylabel("Average Execution Time")
-    plt.title('Average Total Execution Time of Astar and Reinforcement Learning in Environments')
+    plt.title('Average Execution Time of Astar and Reinforcement Learning in Environments')
 
     plt.legend()    
     plt.show()
 
 plot_astar_vs_reinforcement_1()
-plot_average_astar_vs_treinforcement()
+plot_average_astar_vs_reinforcement()
